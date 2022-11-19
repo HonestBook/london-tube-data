@@ -144,7 +144,7 @@ def execute_sql_command_with_markers(command, argument):
 def flatten_result(result):
     flattened_result = []
     for row in result:
-        flattened_result.append(row)
+        flattened_result.append(row[0])
     return flattened_result
 
 def get_station_info(station_name):
