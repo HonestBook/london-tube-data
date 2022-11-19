@@ -73,6 +73,10 @@ except mysql.connector.Error as err:
         exit(1)
 print('Now using database {}'.format(db_name))
 
+# Convert query result, which is a list of (single-element) tuples, to a list of strings
+def flatten_result(result):
+    return [row[0] for row in result]
+
 def execute_sql_command(command):
     # For prettier printing
     command = command.strip()
@@ -83,6 +87,7 @@ def execute_sql_command(command):
     try:
         cursor.execute(command)
         logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
+        return flatten_result(cursor.fetchall())
     except mysql.connector.Error as err:
         logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
 
@@ -125,9 +130,6 @@ cnx.commit()
 
 ### SQL query functions
 
-# Convert query result, which is a list of (single-element) tuples, to a list of strings
-def flatten_result(result):
-    return [row[0] for row in result]
 
 # Exectute an sql query where there is a marker for the user input
 def execute_sql_command_with_markers(command, argument):
@@ -192,9 +194,9 @@ def get_line_info(line_name):
         logging.error(err)
 
 def show_names_in_table(table):
-    query = "SELECT name from %s"
+    query = f"SELECT name FROM {table}"
     try:
-        result = execute_sql_command_with_markers(query, table)
+        result = execute_sql_command(query)
         logging.info(f'Below are all the {table} in the database')
         logging.info(result)
     except mysql.connector.Error as err:
@@ -204,7 +206,7 @@ def show_stations():
     show_names_in_table('stations')
 
 def show_lines():
-    show_names_in_table('lines')
+    show_names_in_table('trainlines')
 
 # Resolve a single query from user
 def resolve_query(query):
