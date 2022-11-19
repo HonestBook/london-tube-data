@@ -169,7 +169,7 @@ def get_station_info(station_name):
         if not result:
             logging.info('There is no such station')
         else:
-            logging.info(f'{bcolors.OKCYAN}{station_name.captialize()}{bcolors.ENDC} Station has the following lines passing through:')
+            logging.info(f'{bcolors.OKCYAN}{station_name.capitalize()}{bcolors.ENDC} Station has the following lines passing through:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
@@ -191,7 +191,7 @@ def get_line_info(line_name):
         if not result:
             logging.info('There is no such line')
         else:
-            logging.info(f'{bcolors.OKCYAN}{line_name.captitalize()}{bcolors.ENDC} Line passes through the following stations:')
+            logging.info(f'{bcolors.OKCYAN}{line_name.capitalize()}{bcolors.ENDC} Line passes through the following stations:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
