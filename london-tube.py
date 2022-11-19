@@ -144,13 +144,13 @@ def get_station_info(station_name):
     query_station = """
     select trainlines.name
     from trainlines
-    wehre trainlines.id in target_line_ids
-    (select passes.line_id
+    where trainlines.id in
+    (select line_id
     from passes
-    where passes.station_id in target_station_id) as target_line_ids
+    where passes.station_id in 
     (select id
     from stations
-    where stations.name = %s) as target_station_id
+    where stations.name = %s));
     """
     try:
         execute_sql_command_with_markers(query_station, (station_name))
