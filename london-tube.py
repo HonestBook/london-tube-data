@@ -219,16 +219,23 @@ def show_help():
     {bcolors.OKCYAN}station <station-name>{bcolors.ENDC} - show what lines go through a specific station
     {bcolors.OKCYAN}line <line-name>{bcolors.ENDC} - show the stations that a specific line goes through
     {bcolors.OKCYAN}list <stations|lines>{bcolors.ENDC} - show all the names of the stations or lines
+    {bcolors.OKCYAN}quit{bcolors.ENDC}|{bcolors.OKCYAN}exit{bcolors.ENDC} - terminate this application
     {bcolors.OKCYAN}help{bcolors.ENDC} - display this help message
     """
     print(help_str)
+
+### Continuously accept user queries
+quit = False
 
 # Resolve a single query from user
 def resolve_query(query):
     words = query.split()
     command_term = words[0]
     argument_term = ' '.join(words[1:])
-    if command_term == 'station':
+    if query == 'quit' or query == 'exit':
+        quit = True
+        logging.info('Bye')
+    elif command_term == 'station':
         get_station_info(argument_term)
     elif command_term == 'line':
         get_line_info(argument_term)
@@ -244,16 +251,11 @@ def resolve_query(query):
     else:
         logging.error(red_msg('Query is not recognised.'))
 
-### Continuously accept user queries
-quit = False
 while not quit:
     logging.info(f'Try {bcolors.OKCYAN}help{bcolors.ENDC} to see the list of possible queries.')
     # Prompt the user to enter a query
     query = input('Please enter a query: ')
-    if query == 'quit' or query == 'exit':
-        quit = True
-    else:
-        resolve_query(query)
+    resolve_query(query)
 
 # Terminate the connection to MySQL server
 cursor.close()
