@@ -144,8 +144,7 @@ def execute_sql_command_with_markers(command, argument):
 def flatten_result(result):
     flattened_result = []
     for row in result:
-        for item in row:
-            flattened_result.append(item)
+        flattened_result.append(row)
     return flattened_result
 
 def get_station_info(station_name):
@@ -193,6 +192,7 @@ def resolve_query(query):
 
 quit = False
 while not quit:
+    logging.info('Use "help" to see the list of possible queries')
     # Prompt the user to enter a query
     query = input('Please enter a query: ')
     if query == 'quit' or query == 'exit':
