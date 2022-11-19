@@ -166,10 +166,10 @@ def resolve_query(query):
     words = query.split()
     command_term = words[0]
     if command_term == 'station':
-        station_name = words[1:].join(' ')
+        station_name = ' '.join(words[1:])
         get_station_info(station_name)
     elif command_term == 'line':
-        line_name = words[1:].join(' ')
+        line_name = ' '.join(words[1:])
         get_line_info(line_name)
     elif command_term == 'list':
         # TODO implement
