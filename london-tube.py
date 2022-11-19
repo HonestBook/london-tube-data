@@ -121,7 +121,6 @@ for id, line in enumerate(lines_data):
 
 cnx.commit()
 
-
 ### Continuously accept user queries
 
 # Exectute an sql query where there is a marker for the user input
@@ -142,13 +141,10 @@ def execute_sql_command_with_markers(command, argument):
 
 # Convert query result, which is a list of tuples, to a list of strings
 def flatten_result(result):
-    flattened_result = []
-    for row in result:
-        flattened_result.append(row[0])
-    return flattened_result
+    return [item for row in result for item in row]
 
 def get_station_info(station_name):
-    query_station = """
+    station_query = """
     select trainlines.name
     from trainlines
     where trainlines.id in
@@ -160,7 +156,7 @@ def get_station_info(station_name):
     where stations.name = %s));
     """
     try:
-        execute_sql_command_with_markers(query_station, (station_name))
+        execute_sql_command_with_markers(station_query, (station_name))
         result = cursor.fetchall()
         result = flatten_result(result)
         if not result:
@@ -172,8 +168,28 @@ def get_station_info(station_name):
         logging.error(err)
 
 def get_line_info(line_name):
-    # TODO
-    pass
+    line_query = """
+    select stations.name
+    from stations
+    where stations.id in
+    (select station_id
+    from passes
+    where passes.line_id in 
+    (select id
+    from trainlines
+    where trainlines.name = %s));
+    """
+    try:
+        execute_sql_command_with_markers(line_query, (line_name))
+        result = cursor.fetchall()
+        result = flatten_result(result)
+        if not result:
+            logging.info('There is no such line')
+        else:
+            logging.info(f'{line_name} Line passes through the following stations:')
+            logging.info(flatten_result(result))
+    except mysql.connector.Error as err:
+        logging.error(err)
 
 def resolve_query(query):
     words = query.split()
@@ -208,6 +224,3 @@ while not quit:
 
 cursor.close()
 cnx.close()
-
-### TODO Allow the user to quit
-
