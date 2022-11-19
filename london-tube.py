@@ -58,6 +58,8 @@ def create_database(cursor):
         print("Failed creating database: {}".format(err))
         exit(1)
 
+# Use the correct databse
+# Create one if it does not exist
 try:
     cursor.execute("USE {}".format(db_name))
 except mysql.connector.Error as err:
@@ -121,7 +123,11 @@ for id, line in enumerate(lines_data):
 
 cnx.commit()
 
-### Continuously accept user queries
+### SQL query functions
+
+# Convert query result, which is a list of (single-element) tuples, to a list of strings
+def flatten_result(result):
+    return [row[0] for row in result]
 
 # Exectute an sql query where there is a marker for the user input
 def execute_sql_command_with_markers(command, argument):
@@ -136,79 +142,93 @@ def execute_sql_command_with_markers(command, argument):
         # Convert the argument to a tuple as per the mysql connector documentation
         cursor.execute(command, (argument,))
         logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
+        return flatten_result(cursor.fetchall())
     except mysql.connector.Error as err:
         logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
 
-# Convert query result, which is a list of (single-element) tuples, to a list of strings
-def flatten_result(result):
-    return [row[0] for row in result]
 
 def get_station_info(station_name):
     station_query = """
-    select trainlines.name
-    from trainlines
-    where trainlines.id in
-    (select line_id
-    from passes
-    where passes.station_id in 
-    (select id
-    from stations
-    where stations.name = %s));
+    SELECT trainlines.name
+    FROM trainlines
+    WHERE trainlines.id IN
+    (SELECT line_id
+    FROM passes
+    WHERE passes.station_id IN 
+    (SELECT id
+    FROM stations
+    WHERE stations.name = %s));
     """
     try:
-        execute_sql_command_with_markers(station_query, (station_name))
-        result = cursor.fetchall()
-        result = flatten_result(result)
+        result = execute_sql_command_with_markers(station_query, (station_name))
         if not result:
             logging.info('There is no such station')
         else:
-            logging.info(f'{station_name} Station has the following lines passing through:')
+            logging.info(f'{station_name.captialize()} Station has the following lines passing through:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
 
 def get_line_info(line_name):
     line_query = """
-    select stations.name
-    from stations
-    where stations.id in
-    (select station_id
-    from passes
-    where passes.line_id in 
-    (select id
-    from trainlines
-    where trainlines.name = %s));
+    SELECT stations.name
+    FROM stations
+    WHERE stations.id IN
+    (SELECT station_id
+    FROM passes
+    WHERE passes.line_id IN 
+    (SELECT id
+    FROM trainlines
+    WHERE trainlines.name = %s));
     """
     try:
-        execute_sql_command_with_markers(line_query, (line_name))
-        result = cursor.fetchall()
-        result = flatten_result(result)
+        result = execute_sql_command_with_markers(line_query, (line_name))
         if not result:
             logging.info('There is no such line')
         else:
-            logging.info(f'{line_name} Line passes through the following stations:')
+            logging.info(f'{line_name.captitalize()} Line passes through the following stations:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
 
+def show_names_in_table(table):
+    query = "SELECT name from %s"
+    try:
+        result = execute_sql_command_with_markers(query, table)
+        logging.info(f'Below are all the {table} in the database')
+        logging.info(result)
+    except mysql.connector.Error as err:
+        logging.error(err)
+
+def show_stations():
+    show_names_in_table('stations')
+
+def show_lines():
+    show_names_in_table('lines')
+
+# Resolve a single query from user
 def resolve_query(query):
     words = query.split()
     command_term = words[0]
+    argument_term = ' '.join(words[1:])
     if command_term == 'station':
-        station_name = ' '.join(words[1:])
-        get_station_info(station_name)
+        get_station_info(argument_term)
     elif command_term == 'line':
-        line_name = ' '.join(words[1:])
-        get_line_info(line_name)
+        get_line_info(argument_term)
     elif command_term == 'list':
-        # TODO implement
-        pass
-        # show_stations()
-        # show_lines()
+        if argument_term == 'stations':
+            show_stations()
+        elif argument_term == 'lines':
+            show_lines()
+        else:
+            logging.error(f'{bcolors.FAIL}Query is not recognised. Try "list stations" or "list lines" {bcolors.ENDC}')
+    else:
+        logging.error(f'{bcolors.FAIL}Query is not recognised.{bcolors.ENDC}')
 
+### Continuously accept user queries
 quit = False
 while not quit:
-    logging.info('Use "help" to see the list of possible queries')
+    logging.info('Use "help" to see the list of possible queries.')
     # Prompt the user to enter a query
     query = input('Please enter a query: ')
     if query == 'quit' or query == 'exit':
@@ -216,11 +236,8 @@ while not quit:
     else:
         resolve_query(query)
 
-
-## TODO Use "list stations" or "list lines" to see all the stations/lines
-
 ## TODO Use "help" to see all the possible commands
 
-
+# Terminate the connection to MySQL server
 cursor.close()
 cnx.close()
