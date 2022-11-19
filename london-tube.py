@@ -1,6 +1,5 @@
 import json
 import yaml
-# TODO refactor the code using logger
 import logging
 import mysql.connector
 from mysql.connector import errorcode
@@ -26,6 +25,12 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def green_msg(str):
+    return f'{bcolors.OKGREEN}{str}{bcolors.ENDC}'
+
+def red_msg(str):
+    return f'{bcolors.FAIL}{str}{bcolors.ENDC}'
+
 ### Write data into the sql server
 ## Establish a connection with the sql server
 
@@ -39,11 +44,11 @@ while not login_success:
         cnx = mysql.connector.connect(user=username,
                                         password=password,
                                         database=config['db_name'])
-        print('Successfully established connection with MySQL server')
+        logging.debug(green_msg('Successfully established connection with MySQL server'))
         login_success = True 
     except mysql.connector.Error as err:
-        print(err)
-        print('Please re-enter your details.')
+        logging.error(red_msg('err'))
+        logging.info('Please re-enter your details.')
 cursor = cnx.cursor()
 
 # Use the correct databse
@@ -54,24 +59,24 @@ def create_database(cursor):
     try:
         cursor.execute(
             "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db_name))
+        logging.debug(green_msg(f'Database {db_name} created successfully.'))
     except mysql.connector.Error as err:
-        print("Failed creating database: {}".format(err))
+        logging.error(red_msg(f'Failed creating database: {err}'))
         exit(1)
 
 # Use the correct databse
 # Create one if it does not exist
 try:
-    cursor.execute("USE {}".format(db_name))
+    cursor.execute(f'USE {db_name}')
 except mysql.connector.Error as err:
-    print("Database {} does not exists.".format(db_name))
+    logging.error(red_msg(f'Database {db_name} does not exists.'))
     if err.errno == errorcode.ER_BAD_DB_ERROR:
         create_database(cursor)
-        print("Database {} created successfully.".format(db_name))
         cnx.database = db_name
     else:
         print(err)
         exit(1)
-print('Now using database {}'.format(db_name))
+logging.info(green_msg(f'Successfully connected to {db_name} database'))
 
 # Convert query result, which is a list of (single-element) tuples, to a list of strings
 def flatten_result(result):
@@ -86,10 +91,10 @@ def execute_sql_command(command):
     logging.debug('------------------------------------------------')
     try:
         cursor.execute(command)
-        logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
+        logging.debug(green_msg('Success'))
         return flatten_result(cursor.fetchall())
     except mysql.connector.Error as err:
-        logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
+        logging.error(red_msg(f'{err}'))
 
 # Update the database schema accordign to the sql file
 with open(config['schema_path']) as f:
@@ -130,7 +135,6 @@ cnx.commit()
 
 ### SQL query functions
 
-
 # Exectute an sql query where there is a marker for the user input
 def execute_sql_command_with_markers(command, argument):
     # For prettier printing
@@ -143,11 +147,10 @@ def execute_sql_command_with_markers(command, argument):
     try:
         # Convert the argument to a tuple as per the mysql connector documentation
         cursor.execute(command, (argument,))
-        logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
+        logging.debug(green_msg('Success'))
         return flatten_result(cursor.fetchall())
     except mysql.connector.Error as err:
-        logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
-
+        logging.error(red_msg(f'{err}'))
 
 def get_station_info(station_name):
     station_query = """
@@ -166,7 +169,7 @@ def get_station_info(station_name):
         if not result:
             logging.info('There is no such station')
         else:
-            logging.info(f'{station_name.captialize()} Station has the following lines passing through:')
+            logging.info(f'{bcolors.OKCYAN}{station_name.captialize()}{bcolors.ENDC} Station has the following lines passing through:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
@@ -188,7 +191,7 @@ def get_line_info(line_name):
         if not result:
             logging.info('There is no such line')
         else:
-            logging.info(f'{line_name.captitalize()} Line passes through the following stations:')
+            logging.info(f'{bcolors.OKCYAN}{line_name.captitalize()}{bcolors.ENDC} Line passes through the following stations:')
             logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
@@ -197,8 +200,10 @@ def show_names_in_table(table):
     query = f"SELECT name FROM {table}"
     try:
         result = execute_sql_command(query)
-        logging.info(f'Below are all the {table} in the database')
-        logging.info(result)
+        if result is not None:
+            for item in result:
+                print(item)
+        logging.info(green_msg(f'Above are all the {table} in the database'))
     except mysql.connector.Error as err:
         logging.error(err)
 
@@ -207,6 +212,16 @@ def show_stations():
 
 def show_lines():
     show_names_in_table('trainlines')
+
+def show_help():
+    help_str = f"""
+    Available commands:
+    {bcolors.OKCYAN}station <station-name>{bcolors.ENDC} - show what lines go through a specific station
+    {bcolors.OKCYAN}line <line-name>{bcolors.ENDC} - show the stations that a specific line goes through
+    {bcolors.OKCYAN}list <stations|lines>{bcolors.ENDC} - show all the names of the stations or lines
+    {bcolors.OKCYAN}help{bcolors.ENDC} - display this help message
+    """
+    print(help_str)
 
 # Resolve a single query from user
 def resolve_query(query):
@@ -223,22 +238,22 @@ def resolve_query(query):
         elif argument_term == 'lines':
             show_lines()
         else:
-            logging.error(f'{bcolors.FAIL}Query is not recognised. Try "list stations" or "list lines" {bcolors.ENDC}')
+            logging.error(red_msg('Query is not recognised. Try "list stations" or "list lines"'))
+    elif command_term == 'help':
+        show_help()
     else:
-        logging.error(f'{bcolors.FAIL}Query is not recognised.{bcolors.ENDC}')
+        logging.error(red_msg('Query is not recognised.'))
 
 ### Continuously accept user queries
 quit = False
 while not quit:
-    logging.info('Use "help" to see the list of possible queries.')
+    logging.info(f'Try {bcolors.OKCYAN}help{bcolors.ENDC} to see the list of possible queries.')
     # Prompt the user to enter a query
     query = input('Please enter a query: ')
     if query == 'quit' or query == 'exit':
         quit = True
     else:
         resolve_query(query)
-
-## TODO Use "help" to see all the possible commands
 
 # Terminate the connection to MySQL server
 cursor.close()
