@@ -140,6 +140,14 @@ def execute_sql_command_with_markers(command, argument):
     except mysql.connector.Error as err:
         logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
 
+# Convert query result, which is a list of tuples, to a list of strings
+def flatten_result(result):
+    flattened_result = []
+    for row in result:
+        for item in row:
+            flattened_result.append(item)
+    return flattened_result
+
 def get_station_info(station_name):
     query_station = """
     select trainlines.name
@@ -155,9 +163,14 @@ def get_station_info(station_name):
     try:
         execute_sql_command_with_markers(query_station, (station_name))
         result = cursor.fetchall()
-        print(result)
-    except:
-        print('No such station')
+        result = flatten_result(result)
+        if not result:
+            logging.info('There is no such station')
+        else:
+            logging.info(f'{station_name} Station has the following lines passing through:')
+            logging.info(flatten_result(result))
+    except mysql.connector.Error as err:
+        logging.error(err)
 
 def get_line_info(line_name):
     # TODO
