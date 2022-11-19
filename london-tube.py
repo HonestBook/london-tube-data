@@ -141,7 +141,7 @@ def execute_sql_command_with_markers(command, argument):
 
 # Convert query result, which is a list of (single-element) tuples, to a list of strings
 def flatten_result(result):
-    return [item for (item,) in result]
+    return [row[0] for row in result]
 
 def get_station_info(station_name):
     station_query = """
@@ -163,7 +163,7 @@ def get_station_info(station_name):
             logging.info('There is no such station')
         else:
             logging.info(f'{station_name} Station has the following lines passing through:')
-            logging.info(flatten_result(result))
+            logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
 
@@ -187,7 +187,7 @@ def get_line_info(line_name):
             logging.info('There is no such line')
         else:
             logging.info(f'{line_name} Line passes through the following stations:')
-            logging.info(flatten_result(result))
+            logging.info(result)
     except mysql.connector.Error as err:
         logging.error(err)
 
