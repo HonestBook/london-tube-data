@@ -139,9 +139,9 @@ def execute_sql_command_with_markers(command, argument):
     except mysql.connector.Error as err:
         logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
 
-# Convert query result, which is a list of tuples, to a list of strings
+# Convert query result, which is a list of (single-element) tuples, to a list of strings
 def flatten_result(result):
-    return [row[0] for row in result]
+    return [item for item, in result]
 
 def get_station_info(station_name):
     station_query = """
