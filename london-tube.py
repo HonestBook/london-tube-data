@@ -141,7 +141,7 @@ def execute_sql_command_with_markers(command, argument):
 
 # Convert query result, which is a list of tuples, to a list of strings
 def flatten_result(result):
-    return [item for row in result for item in row]
+    return [row[0] for row in result]
 
 def get_station_info(station_name):
     station_query = """
