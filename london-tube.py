@@ -134,7 +134,8 @@ def execute_sql_command_with_markers(command, argument):
     logging.debug('------------------------------------------------')
     logging.debug('The argument to replace the marker is: {}'.format(argument))
     try:
-        cursor.execute(command, argument)
+        # Convert the argument to a tuple as per the mysql connector documentation
+        cursor.execute(command, (argument,))
         logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
     except mysql.connector.Error as err:
         logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
@@ -181,7 +182,7 @@ quit = False
 while not quit:
     # Prompt the user to enter a query
     query = input('Please enter a query: ')
-    if query == 'quit':
+    if query == 'quit' or query == 'exit':
         quit = True
     else:
         resolve_query(query)
@@ -189,7 +190,7 @@ while not quit:
 
 ## TODO Use "list stations" or "list lines" to see all the stations/lines
 
-## TODO Use "-help" to see all the possible commands
+## TODO Use "help" to see all the possible commands
 
 
 cursor.close()
