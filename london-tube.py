@@ -26,14 +26,6 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-# print(config)
-  
-### load the json file
-with open(config['data_path']) as f:
-    data = json.load(f)
-  
-# print(data)
-
 ### Write data into the sql server
 ## Establish a connection with the sql server
 
@@ -82,11 +74,11 @@ print('Now using database {}'.format(db_name))
 def execute_sql_command(command):
     # For prettier printing
     command = command.strip()
+    logging.debug('Executing the following sql command')
+    logging.debug('------------------------------------------------')
+    logging.debug(command)
+    logging.debug('------------------------------------------------')
     try:
-        logging.debug('Executing the following sql command')
-        logging.debug('------------------------------------------------')
-        logging.debug(command)
-        logging.debug('------------------------------------------------')
         cursor.execute(command)
         logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
     except mysql.connector.Error as err:
@@ -100,7 +92,13 @@ commands = file_content.split(';')
 for command in commands:
     execute_sql_command(command)
 
-## Insert data
+### Insert data
+
+# load the json file
+with open(config['data_path']) as f:
+    data = json.load(f)
+
+# Insert station data
 stations_data = data['stations']
 for row in stations_data:
     id = row['id']
@@ -108,6 +106,7 @@ for row in stations_data:
     insert_station = f'INSERT INTO stations(id, name) VALUES ("{id}", "{name}")'
     execute_sql_command(insert_station)
 
+# Insert line and passing data
 lines_data = data['lines']
 # the loop is written this way to have id for passes data
 # the downside of this is that the trainlines database has to be
@@ -119,12 +118,74 @@ for id, line in enumerate(lines_data):
     for passed_station in line['stations']:
         insert_pass = f'INSERT INTO passes(station_id, line_id) VALUES ("{passed_station}", "{id}")'
         execute_sql_command(insert_pass)
-        
-
-
 
 cnx.commit()
-### Continuously accept queries
+
+
+### Continuously accept user queries
+
+# Exectute an sql query where there is a marker for the user input
+def execute_sql_command_with_markers(command, argument):
+    # For prettier printing
+    command = command.strip()
+    logging.debug('Executing the following sql command')
+    logging.debug('------------------------------------------------')
+    logging.debug(command)
+    logging.debug('------------------------------------------------')
+    logging.debug('The argument to replace the marker is: {}'.format(argument))
+    try:
+        cursor.execute(command, argument)
+        logging.debug(f'{bcolors.OKGREEN}Success{bcolors.ENDC}')
+    except mysql.connector.Error as err:
+        logging.error(f'{bcolors.FAIL}{err}{bcolors.ENDC}')
+
+def get_station_info(station_name):
+    query_station = """
+    select trainlines.name
+    from trainlines
+    wehre trainlines.id in target_line_ids
+    (select passes.line_id
+    from passes
+    where passes.station_id in target_station_id) as target_line_ids
+    (select id
+    from stations
+    where stations.name = %s) as target_station_id
+    """
+    try:
+        execute_sql_command_with_markers(query_station, (station_name))
+        result = cursor.fetchall()
+        print(result)
+    except:
+        print('No such station')
+
+def get_line_info(line_name):
+    # TODO
+    pass
+
+def resolve_query(query):
+    words = query.split()
+    command_term = words[0]
+    if command_term == 'station':
+        station_name = words[1:].join(' ')
+        get_station_info(station_name)
+    elif command_term == 'line':
+        line_name = words[1:].join(' ')
+        get_line_info(line_name)
+    elif command_term == 'list':
+        # TODO implement
+        pass
+        # show_stations()
+        # show_lines()
+
+quit = False
+while not quit:
+    # Prompt the user to enter a query
+    query = input('Please enter a query: ')
+    if query == 'quit':
+        quit = True
+    else:
+        resolve_query(query)
+
 
 ## TODO Use "list stations" or "list lines" to see all the stations/lines
 
