@@ -62,7 +62,6 @@ def create_database(cursor):
         logging.debug(green_msg(f'Database {db_name} created successfully.'))
     except mysql.connector.Error as err:
         logging.error(red_msg(f'Failed creating database: {err}'))
-        exit(1)
 
 # Use the correct databse
 # Create one if it does not exist
@@ -75,7 +74,6 @@ except mysql.connector.Error as err:
         cnx.database = db_name
     else:
         print(err)
-        exit(1)
 logging.info(green_msg(f'Successfully connected to {db_name} database'))
 
 # Convert query result, which is a list of (single-element) tuples, to a list of strings
@@ -105,31 +103,28 @@ for command in commands:
     execute_sql_command(command)
 
 ### Insert data
-
 # load the json file
 with open(config['data_path']) as f:
     data = json.load(f)
 
+def insert_pair_into_table(table, column1, column2, v1, v2):
+    query = f'INSERT INTO {table}({column1}, {column2}) VALUES ("{v1}", "{v2}")'
+    execute_sql_command(query)
+
 # Insert station data
 stations_data = data['stations']
 for row in stations_data:
-    id = row['id']
-    name = row['name']
-    insert_station = f'INSERT INTO stations(id, name) VALUES ("{id}", "{name}")'
-    execute_sql_command(insert_station)
+    insert_pair_into_table('stations', 'id', 'name', row['id'], row['name'])
 
 # Insert line and passing data
 lines_data = data['lines']
 # the loop is written this way to have id for passes data
 # the downside of this is that the trainlines database has to be
 # empty before inserting, otherwise the ids will not match.
-for id, line in enumerate(lines_data):
-    name = line['name']
-    insert_line = f'INSERT INTO trainlines(id, name) VALUES ("{id}", "{name}")'
-    execute_sql_command(insert_line)
-    for passed_station in line['stations']:
-        insert_pass = f'INSERT INTO passes(station_id, line_id) VALUES ("{passed_station}", "{id}")'
-        execute_sql_command(insert_pass)
+for id, trainline in enumerate(lines_data):
+    insert_pair_into_table('stations', 'id', 'name', id, trainline['name'])
+    for passed_station in trainline['stations']:
+        insert_pair_into_table('passes', 'station_id', 'line_id', passed_station, id)
 
 cnx.commit()
 
@@ -218,7 +213,7 @@ def show_help():
     Available commands:
     {bcolors.OKCYAN}station <station-name>{bcolors.ENDC} - show what lines go through a specific station
     {bcolors.OKCYAN}line <line-name>{bcolors.ENDC} - show the stations that a specific line goes through
-    {bcolors.OKCYAN}list <stations|lines>{bcolors.ENDC} - show all the names of the stations or lines
+    {bcolors.OKCYAN}list <stations|lines>{bcolors.ENDC} - show all the stations or lines
     {bcolors.OKCYAN}quit{bcolors.ENDC}|{bcolors.OKCYAN}exit{bcolors.ENDC} - terminate this application
     {bcolors.OKCYAN}help{bcolors.ENDC} - display this help message
     """
