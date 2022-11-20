@@ -127,27 +127,10 @@ for id, trainline in enumerate(lines_data):
 
 cnx.commit()
 
-### SQL query functions
-
-# Exectute an sql query where there is a marker for the user input
-def execute_sql_command_with_markers(command, argument):
-    # For prettier printing
-    command = command.strip()
-    logging.debug('Executing the following sql command')
-    logging.debug('------------------------------------------------')
-    logging.debug(command)
-    logging.debug('------------------------------------------------')
-    logging.debug('The argument to replace the marker is: {}'.format(argument))
-    try:
-        # Convert the argument to a tuple as per the mysql connector documentation
-        cursor.execute(command, (argument,))
-        logging.debug(green_msg('Success'))
-        return flatten_result(cursor.fetchall())
-    except mysql.connector.Error as err:
-        logging.error(red_msg(f'{err}'))
+### Functions for resolving user queries
 
 def get_station_info(station_name):
-    station_query = """
+    station_query = f"""
     SELECT trainlines.name
     FROM trainlines
     WHERE trainlines.id IN
@@ -156,10 +139,10 @@ def get_station_info(station_name):
     WHERE passes.station_id IN 
     (SELECT id
     FROM stations
-    WHERE stations.name = %s));
+    WHERE stations.name = "{station_name}"));
     """
     try:
-        result = execute_sql_command_with_markers(station_query, (station_name))
+        result = execute_sql_command(station_query)
         if not result:
             logging.info(red_msg('There is no such station'))
         else:
@@ -169,7 +152,7 @@ def get_station_info(station_name):
         logging.error(err)
 
 def get_line_info(line_name):
-    line_query = """
+    line_query = f"""
     SELECT stations.name
     FROM stations
     WHERE stations.id IN
@@ -178,10 +161,10 @@ def get_line_info(line_name):
     WHERE passes.line_id IN 
     (SELECT id
     FROM trainlines
-    WHERE trainlines.name = %s));
+    WHERE trainlines.name = "{line_name}"));
     """
     try:
-        result = execute_sql_command_with_markers(line_query, (line_name))
+        result = execute_sql_command(line_query)
         if not result:
             logging.info(red_msg('There is no such line'))
         else:
