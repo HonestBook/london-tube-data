@@ -43,7 +43,7 @@ while not login_success:
     try:
         cnx = mysql.connector.connect(user=username,
                                         password=password)
-        logging.debug(green_msg('Successfully established connection with MySQL server'))
+        logging.debug(green_msg('Successfully established connection with MySQL server.'))
         login_success = True 
     except mysql.connector.Error as err:
         logging.error(red_msg(f'{err}'))
@@ -73,7 +73,7 @@ except mysql.connector.Error as err:
         cnx.database = db_name
     else:
         print(err)
-logging.info(green_msg(f'Successfully connected to {db_name} database'))
+logging.info(green_msg(f'Successfully connected to {db_name} database.'))
 
 # Convert query result, which is a list of (single-element) tuples, to a list of strings
 def flatten_result(result):

@@ -1,7 +1,5 @@
 data_path: 'train-network.json'
-# The following database should exist in the SQL server before
-# starting the application
 db_name: 'london_tube'
 schema_path: 'schema.sql'
-# Set to INFO for less verbose messages
+# set to INFO rather than DEBUG for less verbose messages
 logging_level: DEBUG
