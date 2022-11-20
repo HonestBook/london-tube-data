@@ -36,3 +36,5 @@ loading the data. This can have bad consequences, however, this helps the
 application to be in a predictable state when boot up. Also, if ever London
 underground updates (which happens fairly often), the only change need to be
 made is on the json file.
+5. Apparently "lines" is a keyword in MySQL. Hence the table for lines is named
+"trainlines", be careful with that.

@@ -224,6 +224,8 @@ quit = False
 # Resolve a single query from user
 def resolve_query(query):
     words = query.split()
+    # The first word in a query is the command term
+    # Whatever comes afterwards are treated collectively as argument term
     command_term = words[0]
     argument_term = ' '.join(words[1:])
     if query == 'quit' or query == 'exit':
