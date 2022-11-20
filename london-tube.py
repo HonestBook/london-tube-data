@@ -122,7 +122,7 @@ lines_data = data['lines']
 # the downside of this is that the trainlines database has to be
 # empty before inserting, otherwise the ids will not match.
 for id, trainline in enumerate(lines_data):
-    insert_pair_into_table('stations', 'id', 'name', id, trainline['name'])
+    insert_pair_into_table('trainlines', 'id', 'name', id, trainline['name'])
     for passed_station in trainline['stations']:
         insert_pair_into_table('passes', 'station_id', 'line_id', passed_station, id)
 
