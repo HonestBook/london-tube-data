@@ -228,6 +228,7 @@ def resolve_query(query):
     command_term = words[0]
     argument_term = ' '.join(words[1:])
     if query == 'quit' or query == 'exit':
+        global quit
         quit = True
         logging.info('Bye')
     elif command_term == 'station':
