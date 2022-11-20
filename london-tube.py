@@ -4,7 +4,7 @@ import logging
 import mysql.connector
 from mysql.connector import errorcode
 
-### Load the config file
+### Initialisations
 with open('config.yaml') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -47,7 +47,7 @@ while not login_success:
         logging.debug(green_msg('Successfully established connection with MySQL server'))
         login_success = True 
     except mysql.connector.Error as err:
-        logging.error(red_msg('err'))
+        logging.error(red_msg(f'err'))
         logging.info('Please re-enter your details.')
 cursor = cnx.cursor()
 
@@ -162,7 +162,7 @@ def get_station_info(station_name):
     try:
         result = execute_sql_command_with_markers(station_query, (station_name))
         if not result:
-            logging.info('There is no such station')
+            logging.info(red_msg('There is no such station'))
         else:
             logging.info(f'{bcolors.OKCYAN}{station_name.capitalize()}{bcolors.ENDC} Station has the following lines passing through:')
             logging.info(result)
@@ -184,7 +184,7 @@ def get_line_info(line_name):
     try:
         result = execute_sql_command_with_markers(line_query, (line_name))
         if not result:
-            logging.info('There is no such line')
+            logging.info(red_msg('There is no such line'))
         else:
             logging.info(f'{bcolors.OKCYAN}{line_name.capitalize()}{bcolors.ENDC} Line passes through the following stations:')
             logging.info(result)

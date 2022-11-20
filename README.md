@@ -1,6 +1,7 @@
 ## How to use this application
-0. Make sure there is a local MySQL server running.
-1. Start the application.
+0. Make sure there is a local MySQL server running. And have access credentials
+of a user with sufficient authorities.
+1. Start the application (using Python 3).
 2. Enter user credentials for the MySQL server.
 3. You can now make queries, use "help" to see all the possible commands.
 
