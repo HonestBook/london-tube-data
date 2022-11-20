@@ -42,12 +42,11 @@ while not login_success:
     password = input('Password: ')
     try:
         cnx = mysql.connector.connect(user=username,
-                                        password=password,
-                                        database=config['db_name'])
+                                        password=password)
         logging.debug(green_msg('Successfully established connection with MySQL server'))
         login_success = True 
     except mysql.connector.Error as err:
-        logging.error(red_msg(f'err'))
+        logging.error(red_msg(f'{err}'))
         logging.info('Please re-enter your details.')
 cursor = cnx.cursor()
 
